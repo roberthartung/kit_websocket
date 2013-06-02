@@ -12,9 +12,16 @@ function Connection(socket)
 	
 	socket.on('data', function(buffer)
 	{
-		var frame = new Frame(buffer, 0);
-		console.log('<<<', frame.message);
-		connection.emit('data', frame.message);
+		var bufferOffset = 0;
+		do
+		{
+			var buf = buffer.slice(bufferOffset);
+			var frame = new Frame(buf, 0);
+			//console.log('<<< "'+frame.message+'"');
+			connection.emit('data', frame.message);
+			bufferOffset += frame.length;
+		}
+		while(bufferOffset + 1 < buffer.length); // got more frames?
 	});
 	
 	socket.on('end', function()

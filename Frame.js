@@ -58,7 +58,7 @@ Frame.prototype.createFromBuffer = function(buffer)
 	}
 	
 	// read 1 bit
-	var headerLength = 2;
+	this.length = 2;
 	this.isFin = readBits(1);
 	this.rsv = readBits(3);
 	this.isDeflated = this.rsv & 0x4 ? 1 : 0;
@@ -71,12 +71,12 @@ Frame.prototype.createFromBuffer = function(buffer)
 	
 	if(this.payloadLength == 126)
 	{
-		headerLength += 2;
+		this.length += 2;
 		this.payloadLength = readBits(16);
 	}
 	else if(this.payloadLength == 127)
 	{
-		headerLength += 8;
+		this.length += 8;
 		// @todo we should use .read... functions here
 		readBits(64);
 	}
@@ -84,7 +84,7 @@ Frame.prototype.createFromBuffer = function(buffer)
 	var mask;
 	if(this.isMasked)
 	{
-		headerLength += 4;
+		this.length += 4;
 		this.maskingKey = readBits(32);
 		mask = [((this.maskingKey >>> 24) & 0xFF), ((this.maskingKey >>> 16) & 0xFF), ((this.maskingKey >>> 8) & 0xFF), ((this.maskingKey >>> 0) & 0xFF)];
 		//console.log('maskingKey:', this.maskingKey, this.maskingKey.toString(16), this.mask);
@@ -96,22 +96,25 @@ Frame.prototype.createFromBuffer = function(buffer)
 	}
 	
 	var byteOffset = bitOffset / 8;
-	var messageLength = buffer.length - byteOffset;
+	//var messageLength = byteOffset+this.payloadLength;
 	
-	this.message = new Buffer(messageLength, 'utf8');
-	this.message_raw1 = new Buffer(messageLength + 4, 'hex');
-	this.message_raw2 = new Buffer(messageLength + 4, 'utf8');
+	this.message = new Buffer(this.payloadLength, 'utf8');
+	//this.message_raw1 = new Buffer(messageLength + 4, 'hex');
+	//this.message_raw2 = new Buffer(messageLength + 4, 'utf8');
 	var maskOffset = 0;
 	var i = 0;
-	for(var b=byteOffset;b<buffer.length;b++)
+	// buffer.length
+	this.length+= this.payloadLength;
+	//console.log(byteOffset, byteOffset+this.payloadLength);
+	for(var b=byteOffset;b<byteOffset+this.payloadLength;b++)
 	{
-		this.message_raw1[i] = buffer.readUInt8(b);
-		this.message_raw2[i] = buffer.readUInt8(b);
+		//this.message_raw1[i] = buffer.readUInt8(b);
+		//this.message_raw2[i] = buffer.readUInt8(b);
 	
 		//console.log(b + ': ' + buffer.readUInt8(b).toString(16));
 	
 		var chrCode = buffer.readUInt8(b) ^ mask[maskOffset];
-		//console.log('chrCode:', chrCode.toString(16));
+		//console.log('chrCode:', i,  String.fromCharCode(chrCode));
 		this.message[i++] = chrCode;
 		//console.log(chrCode, chrCode.toString(16));
 		//this.message += String.fromCharCode(chrCode);
@@ -134,21 +137,17 @@ Frame.prototype.createFromBuffer = function(buffer)
 	});
 	*/
 
+	/*
 	if(this.isDeflated)
 	{
 		this.message = new Buffer(this.message + '\x00\x00\xFF\xFF', 'utf8');
-		
-		/*this.message.writeUInt8(0x00, i++);
-		this.message.writeUInt8(0x00, i++);
-		this.message.writeUInt8(0xff, i++);
-		this.message.writeUInt8(0xff, i++);
-		*/
 		//console.log('this.message:', this.message, this.message.toString('hex'));
 		zlib.inflate(this.message, function()
 		{
 			console.log(arguments);
 		});
 	}
+	*/
 	
 	this.message = this.message.toString();
 }
