@@ -12,6 +12,8 @@ function Connection(socket)
 	
 	socket.on('data', function(buffer)
 	{
+		//return;
+		console.log('data:', buffer);
 		var bufferOffset = 0;
 		do
 		{
@@ -26,11 +28,13 @@ function Connection(socket)
 	
 	socket.on('end', function()
 	{
+		console.log('disconnect');
 		connection.emit('disconnect');
 	});
 	
 	this.send = function(msg)
 	{
+		console.log('connection.send('+msg+')');
 		var frame = new Frame(msg);
 		socket.write(frame.byteStream, 'binary');
 	}

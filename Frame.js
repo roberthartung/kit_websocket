@@ -9,23 +9,38 @@ function Frame(arg, compression)
 	}
 	else if(typeof arg === 'string')
 	{
-		var bytes = [];
+		//var bytes = [];
 		this.isFin = 1; // last frame segment
 		this.opcode = 1; // text frame
 		this.isMasked = 0;
 		this.payloadLength = arg.length;
-		bytes.push(this.isFin << 7 | this.opcode);
-		bytes.push(this.isMasked << 7 | this.payloadLength);
-		//console.log((this.isMasked << 7 + this.payloadLength&0x7f).toString(2));
+		var b = new Buffer(2 + arg.length);
 		
+		//bytes.push();
+		//bytes.push();
+		
+		b[0] = this.isFin << 7 | this.opcode;
+		b[1] = this.isMasked << 7 | this.payloadLength;
+
+		for(var o=0; o<arg.length; o++)
+		{
+			b[2+o] = arg.charCodeAt(o);
+		}
+		
+		/*
 		this.byteStream = '';
 		for(b=0;b<bytes.length;b++)
 		{
+			console.log(b, bytes[b].toString(16));
+			
 			var chr = String.fromCharCode(bytes[b]);
 			this.byteStream += chr;
 		}
 		
 		this.byteStream += arg;
+		*/
+		
+		this.byteStream = b;
 	}
 }
 
@@ -67,7 +82,20 @@ Frame.prototype.createFromBuffer = function(buffer)
 	this.payloadLength = readBits(7);
 	
 	// 1 4 1 1 5
-	//console.log(this.isFin, this.rsv, this.opcode, this.isMasked, this.payloadLength);
+	console.log(this.isFin, this.rsv, this.opcode, this.isMasked, this.payloadLength);
+	
+	switch(this.opcode)
+	{
+		case 0 : // continuation frame
+			return;
+		break;
+		case 6 :
+			return;
+		break;
+		case 1 : // text frame
+			
+		break;
+	}
 	
 	if(this.payloadLength == 126)
 	{
