@@ -1,25 +1,22 @@
 var events = require("events"),
 	util = require("util");
-	
-var Frame = require('./Frame');
 
-function Connection(socket)
+function Connection(socket, protocol)
 {
 	events.EventEmitter.call(this);
 	var connection = this;
 	socket.setNoDelay(true);
 	socket.setTimeout(0);
 	
+	var Frame = require('./Frames/' + protocol);
+	
 	socket.on('data', function(buffer)
 	{
-		//return;
-		console.log('data:', buffer);
 		var bufferOffset = 0;
 		do
 		{
 			var buf = buffer.slice(bufferOffset);
 			var frame = new Frame(buf, 0);
-			//console.log('<<< "'+frame.message+'"');
 			connection.emit('data', frame.message);
 			bufferOffset += frame.length;
 		}
@@ -28,13 +25,11 @@ function Connection(socket)
 	
 	socket.on('end', function()
 	{
-		console.log('disconnect');
 		connection.emit('disconnect');
 	});
 	
 	this.send = function(msg)
 	{
-		console.log('connection.send('+msg+')');
 		var frame = new Frame(msg);
 		socket.write(frame.byteStream, 'binary');
 	}

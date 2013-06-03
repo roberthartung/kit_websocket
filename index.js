@@ -49,10 +49,13 @@ module.exports = function(httpServer)
 			if(request.headers['sec-websocket-protocol'])
 				socket.write("WebSocket-Protocol: "+request.headers['sec-websocket-protocol']+"\r\n");
 			
+			var protocol = 'hybi-13';
+			
 			socket.write("\r\n");
 			
 			if(request.headers['sec-websocket-key1'] && request.headers['sec-websocket-key2'])
 			{
+				protocol = 'hixie-76';
 				var key1 = request.headers['sec-websocket-key1'];
 				var key2 = request.headers['sec-websocket-key2'];
 				
@@ -81,16 +84,8 @@ module.exports = function(httpServer)
 					}
 				}
 				
-				console.log(num1, num2);
-				
 				num1 = parseInt(num1) / (key1.split(" ").length - 1);
 				num2 = parseInt(num2) / (key2.split(" ").length - 1);
-				
-				//console.log(request.headers['sec-websocket-key1'], request.headers['sec-websocket-key1'].length);
-				//console.log(request.headers['sec-websocket-key2'], request.headers['sec-websocket-key2'].length);
-				
-				// request.headers['sec-websocket-key1']
-				// request.headers['sec-websocket-key2']
 				
 				socket.once('data', function(data)
 				{
@@ -128,15 +123,14 @@ module.exports = function(httpServer)
 					var hex = md5.digest('hex');
 					
 					socket.write(bin, 'binary');
-					
-					var connection = new Connection(socket);
+					var connection = new Connection(socket, protocol);
 					webSocket.emit('connect', connection);
 					connections.push(connection);
 				});
 			}
 			else
 			{
-				var connection = new Connection(socket);
+				var connection = new Connection(socket, protocol);
 				webSocket.emit('connect', connection);
 				connections.push(connection);
 			}
