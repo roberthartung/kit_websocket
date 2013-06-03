@@ -82,7 +82,7 @@ Frame.prototype.createFromBuffer = function(buffer)
 	this.payloadLength = readBits(7);
 	
 	// 1 4 1 1 5
-	console.log(this.isFin, this.rsv, this.opcode, this.isMasked, this.payloadLength);
+	//console.log(this.isFin, this.rsv, this.opcode, this.isMasked, this.payloadLength);
 	
 	switch(this.opcode)
 	{
